@@ -5,17 +5,10 @@ from pdf_analyze import PDFLoader
 from llm.analyze import pdf_to_documents
 from dotenv import load_dotenv
 
-load_dotenv()
 
 from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
 from schemas.response import RecommendedResumeResponse, ResumeInfoResponse, InterviewQuestionResponse
-from schemas.enums import QuestionType
-from schemas.enums import (
-    QuestionType,
-    JobCategory,
-    YearsOfExperience,
-    ProgrammingLanguage,
-)
+
 
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
@@ -38,6 +31,8 @@ ai_router = APIRouter(
                 response_description="",
                 )
 def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]:
+    
+    
     return RecommendedResumeResponse(resume_id=1, applicant_name="홍길동", job_category='backend', years='0-3', language='python')
 
 
@@ -49,26 +44,32 @@ def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]
 )
 def interview(resume_id: int) -> list[InterviewQuestionResponse]:
     # resume_id에 해당하는 정보 chroma db에서 가져오기
-    # resume_info = app.vector_store.get_resume_info(resume_id) 
+    resume_info = app.vector_store.get_resume_info(resume_id) 
 
-    return [
-        InterviewQuestionResponse(
-            question_type=QuestionType.JOB_SPECIFIC,
-            question="[백엔드 직군별 질문]: 네트워크 통신 프로토콜에 대해 설명해주세요.",
-        ),
-        InterviewQuestionResponse(
-            question_type=QuestionType.CULTURE_FIT,
-            question="[컬쳐핏 질문]: 팀원들과 협업하는 방법에 대해 설명해주세요.",
-        ),
-        InterviewQuestionResponse(
-            question_type=QuestionType.EXPERIENCE,
-            question="[경험 질문]: 최근 프로젝트에서 가장 어려웠던 부분은 무엇인가요?",
-        ),
-        InterviewQuestionResponse(
-            question_type=QuestionType.PROJECT,
-            question="[프로젝트 질문]: 프로젝트 기획 및 설계 과정에 대해 설명해주세요.",
-        ),
-    ]
+    from llm.generate_question import generate_question
+    
+    questions = generate_question(''.join(resume_info['documents']))
+
+    return questions
+
+# [
+#         InterviewQuestionResponse(
+#             question_type=QuestionType.JOB_SPECIFIC,
+#             question="[백엔드 직군별 질문]: 네트워크 통신 프로토콜에 대해 설명해주세요.",
+#         ),
+#         InterviewQuestionResponse(
+#             question_type=QuestionType.CULTURE_FIT,
+#             question="[컬쳐핏 질문]: 팀원들과 협업하는 방법에 대해 설명해주세요.",
+#         ),
+#         InterviewQuestionResponse(
+#             question_type=QuestionType.EXPERIENCE,
+#             question="[경험 질문]: 최근 프로젝트에서 가장 어려웠던 부분은 무엇인가요?",
+#         ),
+#         InterviewQuestionResponse(
+#             question_type=QuestionType.PROJECT,
+#             question="[프로젝트 질문]: 프로젝트 기획 및 설계 과정에 대해 설명해주세요.",
+#         ),
+#     ]
 
 
 @ai_router.post(
@@ -86,20 +87,20 @@ def analyze(req: AnalyzeResumeRequest) -> ResumeInfoResponse:
 
     analyzed_data = pdf_to_documents(pdf_data)
 
-    # chroma db에 저장
-    # app.vector_store.add_resume(content=pdf_data, 
-    #                             resume_id=req.resume_id, 
-    #                             applicant_name=analyzed_data.applicant_name, 
-    #                             job_category=analyzed_data.job_category, 
-    #                             years=analyzed_data.years, 
-    #                             language=analyzed_data.language)
+
+    app.vector_store.add_resume(content=analyzed_data['summary'], 
+                                resume_id=req.resume_id, 
+                                applicant_name=analyzed_data['resume_info'].applicant_name, 
+                                job_category=analyzed_data['resume_info'].job_category, 
+                                years=analyzed_data['resume_info'].years, 
+                                language=analyzed_data['resume_info'].language)
 
     return ResumeInfoResponse(
         resume_id=req.resume_id,
-        applicant_name=analyzed_data.applicant_name,
-        job_category=analyzed_data.job_category,
-        years=analyzed_data.years,
-        language=analyzed_data.language,
+        applicant_name=analyzed_data['resume_info'].applicant_name,
+        job_category=analyzed_data['resume_info'].job_category,
+        years=analyzed_data['resume_info'].years,
+        language=analyzed_data['resume_info'].language,
     )
 
 

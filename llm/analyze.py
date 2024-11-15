@@ -88,8 +88,6 @@ def pdf_to_documents(documents: list[Document]):
     ).invoke(resume)
     return response
 
-    return response
-
 
 if __name__ == "__main__":
 
