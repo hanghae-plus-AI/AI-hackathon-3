@@ -2,10 +2,9 @@ import os
 from datetime import datetime
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from memory import get_session_history
-
+from dotenv import load_dotenv
 
 load_dotenv()
 # 현재 날짜 가져오기
