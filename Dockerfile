@@ -1,5 +1,5 @@
 # 베이스 이미지
-FROM python:3.12-slim as python-base
+FROM python:3.11-slim as python-base
 
 # Python 관련 환경 변수 설정
 ENV PYTHONUNBUFFERED=1 \
