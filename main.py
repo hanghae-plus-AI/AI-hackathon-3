@@ -10,7 +10,6 @@ load_dotenv()
 from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
 from schemas.response import RecommendedResumeResponse, ResumeInfoResponse, InterviewQuestionResponse
 from schemas.enums import QuestionType
-from schemas.response import InterviewQuestionResponse, ResumeInfoResponse
 from schemas.enums import (
     QuestionType,
     JobCategory,
@@ -19,10 +18,7 @@ from schemas.enums import (
 )
 
 from langchain_openai import ChatOpenAI
-from vector_store import save_doc, get_doc_by_id
 from dotenv import load_dotenv
-from langchain_core.documents import Document
-from analize_llm import pdf_to_documents
 
 load_dotenv()
 
