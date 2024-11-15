@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
 from langchain.chains.openai_functions import create_structured_output_chain
 from dotenv import load_dotenv
-from LogCallbackHandler import LogCallbackHandler
+from llm.LogCallbackHandler import LogCallbackHandler
 from langchain.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import List
@@ -38,7 +38,7 @@ question_llm_with_schema = question_llm.with_structured_output(
 )
 
 
-def generate_question(resume):
+def generate_question(resume: str):
     response = RunnableParallel(
         job_specific=RunnablePassthrough.assign(subject=lambda _: "직군별 질문")
         | question_prompt
