@@ -132,7 +132,7 @@ class LogCallbackHandler(BaseCallbackHandler):
             client = gspread.authorize(creds)
 
             # 스프레드시트 및 첫 번째 시트 열기
-            spreadsheet = client.open("AI_질문답변로그")
+            spreadsheet = client.open("QnA_Log")
             worksheet = spreadsheet.get_worksheet(0)  # 첫 번째 시트
 
             # 헤더 추가

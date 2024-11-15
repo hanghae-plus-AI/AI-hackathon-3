@@ -3,7 +3,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
 from dotenv import load_dotenv
-
+from LogCallbackHandler import LogCallbackHandler
 
 load_dotenv()
 
@@ -23,6 +23,9 @@ summarize_prompt = ChatPromptTemplate.from_messages(
 summarize_llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-4o-mini",
+    callbacks=[
+        LogCallbackHandler("summarize resume"),
+    ],
 )
 
 refine_prompt = ChatPromptTemplate.from_messages(
@@ -82,6 +85,9 @@ refine_prompt = ChatPromptTemplate.from_messages(
 refine_llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-4o-mini",
+    callbacks=[
+        LogCallbackHandler("refine json"),
+    ],
 )
 
 
