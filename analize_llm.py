@@ -1,9 +1,13 @@
-from langchain.document_loaders import PyPDFLoader
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
+from langchain.chains.openai_functions import create_structured_output_chain
 from dotenv import load_dotenv
 from LogCallbackHandler import LogCallbackHandler
+from langchain.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+from typing import List
+from langchain_community.document_loaders import PyPDFLoader
 
 load_dotenv()
 
@@ -27,6 +31,21 @@ summarize_llm = ChatOpenAI(
         LogCallbackHandler("summarize resume"),
     ],
 )
+
+
+# Output schema 정의 (Pydantic BaseModel 사용)
+class Qualification(BaseModel):
+    name: str  # 자격증 이름
+    score: int  # 점수
+
+
+class UserProfile(BaseModel):
+    career: int  # 경력
+    education_level: int  # 학력 수준
+    qualifications: List[Qualification]  # 자격증 리스트
+    domains: List[str]  # 전문 분야
+    competences: List[str]  # 주요 역량
+
 
 refine_prompt = ChatPromptTemplate.from_messages(
     [
@@ -90,6 +109,8 @@ refine_llm = ChatOpenAI(
     ],
 )
 
+refine_llm_with_schema = refine_llm.with_structured_output(UserProfile)
+
 
 def pdf_to_documents(pdf_path):
 
@@ -107,9 +128,9 @@ def pdf_to_documents(pdf_path):
             question=(summarize_prompt | summarize_llm | (lambda x: x.content))
         )
         | refine_prompt
-        | refine_llm
+        | refine_llm_with_schema
     ).invoke(resume)
-    print(response.content)
+    print(response)
 
 
 if __name__ == "__main__":
