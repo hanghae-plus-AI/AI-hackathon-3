@@ -7,11 +7,17 @@ from dotenv import load_dotenv
 
 
 from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
-from schemas.response import RecommendedResumeResponse, ResumeInfoResponse, InterviewQuestionResponse
+from schemas.response import (
+    RecommendedResumeResponse,
+    ResumeInfoResponse,
+    InterviewQuestionResponse,
+)
 
 
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+from llm.generate_question import generate_question
+from llm.chat_resumes import chat_resumes_retrieval
 
 load_dotenv()
 
@@ -26,23 +32,27 @@ ai_router = APIRouter(
 )
 
 
-async def write_to_vector_db(content, resume_id, applicant_name, job_category, years, language):
-    app.vector_store.add_resume(content=content, 
-                                resume_id=resume_id, 
-                                applicant_name=applicant_name, 
-                                job_category=job_category, 
-                                years=years, 
-                                language=language)
+async def write_to_vector_db(
+    content, resume_id, applicant_name, job_category, years, language
+):
+    app.vector_store.add_resume(
+        content=content,
+        resume_id=resume_id,
+        applicant_name=applicant_name,
+        job_category=job_category,
+        years=years,
+        language=language,
+    )
 
-@ai_router.post('/resumes-chat',
-                summary="질문을 기반으로 적합한 이력서 추천",
-                description="채용담당관의 요구사항을 기반으로 적합한 이력서 추천",
-                response_description="",
-                )
+
+@ai_router.post(
+    "/resumes-chat",
+    summary="질문을 기반으로 적합한 이력서 추천",
+    description="채용담당관의 요구사항을 기반으로 적합한 이력서 추천",
+    response_description="",
+)
 def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]:
-    
-    
-    return RecommendedResumeResponse(resume_id=1, applicant_name="홍길동", job_category='backend', years='0-3', language='python')
+    return chat_resumes_retrieval(req)
 
 
 @ai_router.post(
@@ -53,11 +63,11 @@ def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]
 )
 def interview(resume_id: int) -> list[InterviewQuestionResponse]:
     # resume_id에 해당하는 정보 chroma db에서 가져오기
-    resume_info = app.vector_store.get_resume_info(resume_id) 
+    resume_info = app.vector_store.get_resume_info(resume_id)
 
     from llm.generate_question import generate_question
-    
-    questions = generate_question(''.join(resume_info['documents']))
+
+    questions = generate_question("".join(resume_info["documents"]))
 
     return questions
 
@@ -68,23 +78,28 @@ def interview(resume_id: int) -> list[InterviewQuestionResponse]:
     description="이력서 업로드 시점에 백그라운드로 실행 예정",
     response_description="",
 )
-def analyze(req: AnalyzeResumeRequest,  background_tasks: BackgroundTasks) -> ResumeInfoResponse:
+def analyze(
+    req: AnalyzeResumeRequest, background_tasks: BackgroundTasks
+) -> ResumeInfoResponse:
     pdf_data = app.pdf_loader.load_pdf(req.file_path)
     analyzed_data = pdf_to_documents(pdf_data)
 
-    background_tasks.add_task(write_to_vector_db, analyzed_data['summary'], 
-                                req.resume_id, 
-                                analyzed_data['resume_info'].applicant_name, 
-                                analyzed_data['resume_info'].job_category, 
-                                analyzed_data['resume_info'].years, 
-                                analyzed_data['resume_info'].language)
+    background_tasks.add_task(
+        write_to_vector_db,
+        analyzed_data["summary"],
+        req.resume_id,
+        analyzed_data["resume_info"].applicant_name,
+        analyzed_data["resume_info"].job_category,
+        analyzed_data["resume_info"].years,
+        analyzed_data["resume_info"].language,
+    )
 
     return ResumeInfoResponse(
         resume_id=req.resume_id,
-        applicant_name=analyzed_data['resume_info'].applicant_name,
-        job_category=analyzed_data['resume_info'].job_category,
-        years=analyzed_data['resume_info'].years,
-        language=analyzed_data['resume_info'].language,
+        applicant_name=analyzed_data["resume_info"].applicant_name,
+        job_category=analyzed_data["resume_info"].job_category,
+        years=analyzed_data["resume_info"].years,
+        language=analyzed_data["resume_info"].language,
     )
 
 
@@ -94,16 +109,6 @@ def healthcheck():
 
 
 app.include_router(ai_router)
-
-
-@ai_router.get("/llm")
-def check_llm():
-    llm = ChatOpenAI(
-        temperature=0.1,
-        model="gpt-4o-mini",
-    )
-    response = llm.invoke("test")
-    return {"message": response.content}
 
 
 @ai_router.get("/llm")
