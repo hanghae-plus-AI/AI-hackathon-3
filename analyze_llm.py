@@ -1,9 +1,16 @@
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.schema import Document
-from langchain.schema.runnable import RunnableParallel
+from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
+from langchain.chains.openai_functions import create_structured_output_chain
 from dotenv import load_dotenv
+from LogCallbackHandler import LogCallbackHandler
+from langchain.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+from typing import List
+from langchain_community.document_loaders import PyPDFLoader
 from pdf_analyze import PDFLoader
+from schemas.response import ResumeInfoResponse
+from langchain.schema import Document
 
 import json
 load_dotenv()
@@ -27,9 +34,13 @@ summarize_prompt = ChatPromptTemplate.from_messages(
 summarize_llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-4o-mini",
+    callbacks=[
+        LogCallbackHandler("summarize resume"),
+    ],
 )
 
 refine_prompt = ChatPromptTemplate.from_messages([
+    
     (
         "system",
         "이력서에서 주요 정보를 추출하여 다음 데이터 구조에 맞게 정보를 찾아줘\n",
@@ -40,9 +51,9 @@ refine_prompt = ChatPromptTemplate.from_messages([
         "\n### ResumeInfo\n"
         "- resume_id: INTEGER\n"
         "- applicant_name: TEXT\n"
-        "- job_category: ENUM ('FRONTEND', 'BACKEND', 'AI', 'FULLSTACK')\n"
-        "- years: ENUM ('0-3', '3-7', '7-10', '10+')\n"
-        "- language: ENUM ('PYTHON', 'JAVA', 'JAVASCRIPT', 'CPP', 'GO')\n"
+        "- job_category: ENUM ('frontend', 'backend', 'ai', 'fullstack')\n"
+        "- years: ENUM ('0-3', '3-7', '7-10')\n"
+        "- language: ENUM ('python', 'java', 'javascript', 'typescript', 'kotlin', 'c++', 'c' 중 하나)\n"
     ),
     (
         "system",
@@ -54,9 +65,9 @@ refine_prompt = ChatPromptTemplate.from_messages([
         "{{\n"
         '    "resume_id": int,  // 이력서 ID\n'
         '    "applicant_name": str,  // 지원자 이름\n'
-        '    "job_category": str,  // 직무 분야 ("FRONTEND", "BACKEND", "AI", "FULLSTACK" 중 하나)\n'
-        '    "years": str,  // 경력 연차 ("0-3", "3-7", "7-10", "10+" 중 하나)\n'
-        '    "language": str  // 주력 프로그래밍 언어 ("PYTHON", "JAVA", "JAVASCRIPT", "CPP", "GO" 중 하나)\n'
+        '    "job_category": str,  // 직무 분야 ("frontend", "backend", "ai", "fullstack")\n'
+        '    "years": str,  // 경력 연차 ("0-3", "3-7", "7-10")\n'
+        '    "language": str  // 주력 프로그래밍 언어 ("python", "java", "javascript", "typescript", "kotlin", "c++", "c" 중 하나)\n'
         "}}\n",
     ),
     (
@@ -68,7 +79,12 @@ refine_prompt = ChatPromptTemplate.from_messages([
 refine_llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-4o-mini",
+    callbacks=[
+        LogCallbackHandler("refine json"),
+    ],
 )
+
+refine_llm_with_schema = refine_llm.with_structured_output(ResumeInfoResponse)
 
 
 def pdf_to_documents(documents: list[Document]):
@@ -81,7 +97,7 @@ def pdf_to_documents(documents: list[Document]):
             question=(summarize_prompt | summarize_llm | (lambda x: x.content))
         )
         | refine_prompt
-        | refine_llm
+        | refine_llm_with_schema
     ).invoke(resume)
 
 

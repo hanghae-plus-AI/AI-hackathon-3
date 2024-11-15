@@ -1,19 +1,14 @@
 from fastapi import FastAPI, APIRouter
-
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
-
-from pdf_analyze import PDFLoader
 from vector_store import VectorStoreManager
-from analyze_llm import pdf_to_documents
-from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
-from schemas.response import InterviewQuestionResponse, ResumeInfoResponse
-from schemas.enums import QuestionType
-
-from langchain_openai import ChatOpenAI
+from pdf_analyze import PDFLoader
 from dotenv import load_dotenv
-
 load_dotenv()
+from pdf_analyze import pdf_to_documents
+
+from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
+from schemas.response import ResumeInfoResponse, InterviewQuestionResponse
+from schemas.enums import QuestionType
 
 app = FastAPI()
 app.pdf_loader = PDFLoader(storage_type="local")
@@ -89,8 +84,16 @@ def check_llm():
     response = llm.invoke("test")
     return {"message": response.content}
 
+@ai_router.get("/llm")
+def check_llm():
+    llm = ChatOpenAI(
+        temperature=0.1,
+        model="gpt-4o-mini",
+    )
+    response = llm.invoke("test")
+    return {"message": response.content}
+
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
