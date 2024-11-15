@@ -2,12 +2,12 @@ from fastapi import FastAPI, APIRouter
 from langchain_openai import ChatOpenAI
 from vector_store import VectorStoreManager
 from pdf_analyze import PDFLoader
+from analyze_llm import pdf_to_documents
 from dotenv import load_dotenv
 load_dotenv()
-from pdf_analyze import pdf_to_documents
 
 from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
-from schemas.response import ResumeInfoResponse, InterviewQuestionResponse
+from schemas.response import RecommendedResumeResponse, ResumeInfoResponse, InterviewQuestionResponse
 from schemas.enums import QuestionType
 
 app = FastAPI()
@@ -25,8 +25,8 @@ ai_router = APIRouter(
                 description="채용담당관의 요구사항을 기반으로 적합한 이력서 추천",
                 response_description="",
                 )
-def resumes_chat(req: ResumeRecommendRequest) -> list[int]:
-    return [1]
+def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]:
+    return RecommendedResumeResponse(resume_id=1, applicant_name="홍길동", job_category='backend', years='0-3', language='python')
 
 
 @ai_router.post('/resumes/{resume_id}/interview',
@@ -35,7 +35,9 @@ def resumes_chat(req: ResumeRecommendRequest) -> list[int]:
                 response_description="질문은 직군별 질문, 컬쳐핏 질문, 경험 질문, 프로젝트 질문으로 나눌 수 있음.",
                 )
 def interview(resume_id: int) -> list[InterviewQuestionResponse]:
-    
+    # resume_id에 해당하는 정보 chroma db에서 가져오기
+    resume_info = app.vector_store.get_resume_info(resume_id) 
+
     return [InterviewQuestionResponse(question_type=QuestionType.JOB_SPECIFIC, question="[백엔드 직군별 질문]: 네트워크 통신 프로토콜에 대해 설명해주세요."),
             InterviewQuestionResponse(question_type=QuestionType.CULTURE_FIT, question="[컬쳐핏 질문]: 팀원들과 협업하는 방법에 대해 설명해주세요."),
             InterviewQuestionResponse(question_type=QuestionType.EXPERIENCE, question="[경험 질문]: 최근 프로젝트에서 가장 어려웠던 부분은 무엇인가요?"),
@@ -54,12 +56,12 @@ def analyze(req: AnalyzeResumeRequest) -> ResumeInfoResponse:
     analyzed_data = pdf_to_documents(pdf_data)
     
     # chroma db에 저장
-    # app.vector_store.add_resume(content=pdf_data, 
-    #                             resume_id=req.resume_id, 
-    #                             applicant_name=analyzed_data.applicant_name, 
-    #                             job_category=analyzed_data.job_category, 
-    #                             years=analyzed_data.years, 
-    #                             language=analyzed_data.language)
+    app.vector_store.add_resume(content=pdf_data, 
+                                resume_id=req.resume_id, 
+                                applicant_name=analyzed_data.applicant_name, 
+                                job_category=analyzed_data.job_category, 
+                                years=analyzed_data.years, 
+                                language=analyzed_data.language)
 
     return ResumeInfoResponse(resume_id=req.resume_id, 
                               applicant_name=analyzed_data.applicant_name, 

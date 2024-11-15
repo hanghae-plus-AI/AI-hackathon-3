@@ -8,7 +8,7 @@ from schemas.enums import JobCategory, YearsOfExperience, ProgrammingLanguage
 
 
 class VectorStoreManager:
-    def __init__(self, persist_directory: str = "chroma_db"):
+    def __init__(self, persist_directory: str = "chroma_wang/chroma.sqlite3"):
         load_dotenv()
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         if not self.openai_api_key:
@@ -122,6 +122,9 @@ class VectorStoreManager:
             k=k,
             filter=where_clause
         )
+
+    def get_resume_info(self, resume_id: int) -> Document:
+        return self.vector_store.get(where={"resume_id": resume_id})
 
 
 # 사용 예시
