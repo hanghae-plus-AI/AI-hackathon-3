@@ -28,43 +28,46 @@ class PDFLoader:
         """로컬 PDF 파일 로드"""
         return self.handler[self.storage_type](file_path)
     
-
-    def _load_local_pdf(self, file_path: str) -> str:
+    def _load_local_pdf(self, file_path: str) -> list[Document]:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        loader = PyPDFLoader(file_path)
-        return loader.load()
+        pdf_reader = PdfReader(file_path)
+        documents = []
+        
+        for page in pdf_reader.pages:
+            documents.append(
+                Document(
+                    page_content=page.extract_text(),
+                    metadata={'source': file_path}
+                )
+            )
+    
+        return documents
 
-    def _load_s3_pdf(self, bucket_name: str, file_path: str) -> list[str]:
-        """S3에서 PDF 파일을 스트림으로 로드"""
+    def _load_s3_pdf(self, file_path: str) -> list[Document]:
         if not hasattr(self, 's3_client'):
             raise ValueError("AWS credentials not provided")
         
-        try:
-            # S3에서 파일 객체 가져오기
-            response = self.s3_client.get_object(
-                Bucket=bucket_name,
-                Key=file_path
+        
+        response = self.s3_client.get_object(
+            Bucket=self.bucket_name,
+            Key=file_path
+        )
+        
+        pdf_stream = BytesIO(response['Body'].read())
+        pdf_reader = PdfReader(pdf_stream)
+        documents = []
+        
+        for page in pdf_reader.pages:
+            documents.append(
+                Document(
+                    page_content=page.extract_text(),
+                    metadata={'source': f"s3://{self.bucket_name}/{file_path}"}
+                )
             )
-            
-            # 스트림으로 읽기
-            pdf_stream = BytesIO(response['Body'].read())
-            
-            # PyPDF2로 직접 처리
-            pdf_reader = PdfReader(pdf_stream)
-            texts = []
-            
-            for page in pdf_reader.pages:
-                texts.append({
-                    'page_content': page.extract_text(),
-                    'metadata': {'source': f"s3://{bucket_name}/{file_path}"}
-                })
-            
-            return texts
-            
-        except Exception as e:
-            raise Exception(f"Error reading PDF from S3: {str(e)}")
+        
+        return documents
 
 def load_pdf(file_path: str) -> str:
     '''

@@ -1,6 +1,12 @@
 import pytest
+from fastapi.testclient import TestClient
+from main import app
 from pdf_analyze import PDFLoader
 from langchain.schema import Document
+
+@pytest.fixture
+def client():
+    return TestClient(app)
 
 def test_load_pdf():
     pdf_loader = PDFLoader(storage_type='local')

@@ -1,8 +1,8 @@
 from fastapi import FastAPI, APIRouter
 from langchain_openai import ChatOpenAI
-from vector_store import VectorStoreManager
+from llm.vector_store import VectorStoreManager
 from pdf_analyze import PDFLoader
-from analyze_llm import pdf_to_documents
+from llm.analyze import pdf_to_documents
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
-app.pdf_loader = PDFLoader(storage_type="local")
+app.pdf_loader = PDFLoader(storage_type="s3")
 app.vector_store = VectorStoreManager(persist_directory="chroma_wang")
 
 ai_router = APIRouter(
@@ -83,15 +83,16 @@ def analyze(req: AnalyzeResumeRequest) -> ResumeInfoResponse:
     pdf_data = app.pdf_loader.load_pdf(req.file_path)
     # PDF 전처리 preprocessed_pdf_data = preprocess_pdf(pdf_data)
     # PDF 분석 llm_analyze(preprocessed_pdf_data)
+
     analyzed_data = pdf_to_documents(pdf_data)
 
     # chroma db에 저장
-    app.vector_store.add_resume(content=pdf_data, 
-                                resume_id=req.resume_id, 
-                                applicant_name=analyzed_data.applicant_name, 
-                                job_category=analyzed_data.job_category, 
-                                years=analyzed_data.years, 
-                                language=analyzed_data.language)
+    # app.vector_store.add_resume(content=pdf_data, 
+    #                             resume_id=req.resume_id, 
+    #                             applicant_name=analyzed_data.applicant_name, 
+    #                             job_category=analyzed_data.job_category, 
+    #                             years=analyzed_data.years, 
+    #                             language=analyzed_data.language)
 
     return ResumeInfoResponse(
         resume_id=req.resume_id,
