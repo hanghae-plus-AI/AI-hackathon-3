@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
 from langchain.chains.openai_functions import create_structured_output_chain
 from dotenv import load_dotenv
-from llm.LogCallbackHandler import LogCallbackHandler
+from llm.log_callback_handler import LogCallbackHandler
 from langchain.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import List
