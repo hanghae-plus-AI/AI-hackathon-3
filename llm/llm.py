@@ -3,7 +3,7 @@ from datetime import datetime
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from memory import get_session_history
+from llm.memory import get_session_history
 from dotenv import load_dotenv
 
 load_dotenv()
