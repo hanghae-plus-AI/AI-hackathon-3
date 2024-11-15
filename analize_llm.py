@@ -1,14 +1,18 @@
-from langchain.document_loaders import PyPDFLoader
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.schema.runnable import RunnableMap, RunnableParallel, RunnablePassthrough
+from langchain.schema import Document
+from langchain.schema.runnable import RunnableParallel
 from dotenv import load_dotenv
+from pdf_analyze import PDFLoader
 
-
+import json
 load_dotenv()
+
+
 
 summarize_prompt = ChatPromptTemplate.from_messages(
     [
+
         (
             "system",
             "이력서 정보를 요약해주는 전문가야\n" "이력서의 요점을 요약해줘 \n",
@@ -16,7 +20,7 @@ summarize_prompt = ChatPromptTemplate.from_messages(
         (
             "human",
             "Resume : \n{question}\n",
-        ),
+        ), 
     ],
 )
 
@@ -25,59 +29,41 @@ summarize_llm = ChatOpenAI(
     model="gpt-4o-mini",
 )
 
-refine_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            "주요정보를 추출해줄거야 다음 Data structure 에 맞는 데이터를 찾아줘\n",
-        ),
-        (
-            "system",
-            "Data Structure:\n"
-            "\n### Resume Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- user_id: INTEGER\n"
-            "- career: INTEGER\n"
-            "- applicant_name: TEXT\n"
-            "- education_level: INTEGER\n"
-            "\n### Qualification Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT ('TOEIC' or 'TOEFL' only)\n"
-            "- score: INTEGER\n"
-            "\n### Domain Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT\n"
-            "\n### Competence Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT\n",
-        ),
-        (
-            "system",
-            "답변양식은 다음과 같아야해 반드시 지켜줘\n",
-        ),
-        (
-            "system",
-            "Response Json:\n"
-            "{{ \n"
-            '    "career": int,  // 경력 (숫자 입력, 예: 3)\n'
-            '    "education_level": int,  // 학력 수준 (1: 초졸, 2: 중졸, 3: 고졸, 4: 대졸, 5: 석사, 6: 박사 중 숫자 입력)\n'
-            '    "qualifications": list({{\n'
-            "        \"name\": str,  // 자격증 이름 ('TOEIC 점수' or 'TOEFL 점수' or 'OPIC 점수' or 'TOEIC_SPEAKING 점수' or 'TEPS 점수'only)\n"
-            '        "score": int  // 점수 (OPIC 인 경우 1~6 중 숫자 입력, OPIC: IL(1), IM 1(2), IM 2(3), IM 3(4), IH(5), AL(6))\n'
-            "    }}),\n"
-            '    "domains": list(str),  // 전문 분야 (예: "AI", "Data Science")\n'
-            '    "competences": list(str)  // 주요 역량 (예: "Problem Solving", "Communication")\n'
-            "}}\n",
-        ),
-        (
-            "human",
-            "Resume : \n{question}\n",
-        ),
-    ],
-)
+refine_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        "이력서에서 주요 정보를 추출하여 다음 데이터 구조에 맞게 정보를 찾아줘\n",
+    ),
+    (
+        "system",
+        "Data Structure:\n"
+        "\n### ResumeInfo\n"
+        "- resume_id: INTEGER\n"
+        "- applicant_name: TEXT\n"
+        "- job_category: ENUM ('FRONTEND', 'BACKEND', 'AI', 'FULLSTACK')\n"
+        "- years: ENUM ('0-3', '3-7', '7-10', '10+')\n"
+        "- language: ENUM ('PYTHON', 'JAVA', 'JAVASCRIPT', 'CPP', 'GO')\n"
+    ),
+    (
+        "system",
+        "답변은 반드시 다음 JSON 형식을 지켜서 작성해줘\n",
+    ),
+    (
+        "system",
+        "Response Dictionary:\n"
+        "{{\n"
+        '    "resume_id": int,  // 이력서 ID\n'
+        '    "applicant_name": str,  // 지원자 이름\n'
+        '    "job_category": str,  // 직무 분야 ("FRONTEND", "BACKEND", "AI", "FULLSTACK" 중 하나)\n'
+        '    "years": str,  // 경력 연차 ("0-3", "3-7", "7-10", "10+" 중 하나)\n'
+        '    "language": str  // 주력 프로그래밍 언어 ("PYTHON", "JAVA", "JAVASCRIPT", "CPP", "GO" 중 하나)\n'
+        "}}\n",
+    ),
+    (
+        "human",
+        "Resume:\n{question}\n",
+    ),
+])
 
 refine_llm = ChatOpenAI(
     temperature=0.1,
@@ -85,13 +71,7 @@ refine_llm = ChatOpenAI(
 )
 
 
-def pdf_to_documents(pdf_path):
-
-    # PDF 로더를 사용하여 파일 읽기
-    loader = PyPDFLoader(pdf_path)
-
-    # Document 객체 리스트로 변환
-    documents = loader.load()
+def pdf_to_documents(documents: list[Document]):
 
     resume = ""
     for doc in documents:
@@ -103,8 +83,15 @@ def pdf_to_documents(pdf_path):
         | refine_prompt
         | refine_llm
     ).invoke(resume)
-    print(response.content)
 
 
 if __name__ == "__main__":
-    pdf_to_documents("./pdf_data/backend_추만석.pdf")
+    
+    file_path = "./pdf_data/backend_추만석.pdf"
+
+    pdf_loader = PDFLoader(storage_type="local")
+    pdf_data = pdf_loader.load_pdf(file_path)
+
+    response = pdf_to_documents(pdf_data)
+    json_response = json.loads(response)
+    print(json_response)
