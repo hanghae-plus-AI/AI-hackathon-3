@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, BackgroundTasks
 from langchain_openai import ChatOpenAI
 from llm.vector_store import VectorStoreManager
 from pdf_analyze import PDFLoader
@@ -24,6 +24,15 @@ ai_router = APIRouter(
     tags=["AI"],
     responses={404: {"description": "Not found"}},
 )
+
+
+async def write_to_vector_db(content, resume_id, applicant_name, job_category, years, language):
+    app.vector_store.add_resume(content=content, 
+                                resume_id=resume_id, 
+                                applicant_name=applicant_name, 
+                                job_category=job_category, 
+                                years=years, 
+                                language=language)
 
 @ai_router.post('/resumes-chat',
                 summary="질문을 기반으로 적합한 이력서 추천",
@@ -52,25 +61,6 @@ def interview(resume_id: int) -> list[InterviewQuestionResponse]:
 
     return questions
 
-# [
-#         InterviewQuestionResponse(
-#             question_type=QuestionType.JOB_SPECIFIC,
-#             question="[백엔드 직군별 질문]: 네트워크 통신 프로토콜에 대해 설명해주세요.",
-#         ),
-#         InterviewQuestionResponse(
-#             question_type=QuestionType.CULTURE_FIT,
-#             question="[컬쳐핏 질문]: 팀원들과 협업하는 방법에 대해 설명해주세요.",
-#         ),
-#         InterviewQuestionResponse(
-#             question_type=QuestionType.EXPERIENCE,
-#             question="[경험 질문]: 최근 프로젝트에서 가장 어려웠던 부분은 무엇인가요?",
-#         ),
-#         InterviewQuestionResponse(
-#             question_type=QuestionType.PROJECT,
-#             question="[프로젝트 질문]: 프로젝트 기획 및 설계 과정에 대해 설명해주세요.",
-#         ),
-#     ]
-
 
 @ai_router.post(
     "/analyze",
@@ -78,22 +68,16 @@ def interview(resume_id: int) -> list[InterviewQuestionResponse]:
     description="이력서 업로드 시점에 백그라운드로 실행 예정",
     response_description="",
 )
-def analyze(req: AnalyzeResumeRequest) -> ResumeInfoResponse:
-
-    # file_path에서 PDF 읽기: pdf_data = load_pdf(req.file_path)
+def analyze(req: AnalyzeResumeRequest,  background_tasks: BackgroundTasks) -> ResumeInfoResponse:
     pdf_data = app.pdf_loader.load_pdf(req.file_path)
-    # PDF 전처리 preprocessed_pdf_data = preprocess_pdf(pdf_data)
-    # PDF 분석 llm_analyze(preprocessed_pdf_data)
-
     analyzed_data = pdf_to_documents(pdf_data)
 
-
-    app.vector_store.add_resume(content=analyzed_data['summary'], 
-                                resume_id=req.resume_id, 
-                                applicant_name=analyzed_data['resume_info'].applicant_name, 
-                                job_category=analyzed_data['resume_info'].job_category, 
-                                years=analyzed_data['resume_info'].years, 
-                                language=analyzed_data['resume_info'].language)
+    background_tasks.add_task(write_to_vector_db, analyzed_data['summary'], 
+                                req.resume_id, 
+                                analyzed_data['resume_info'].applicant_name, 
+                                analyzed_data['resume_info'].job_category, 
+                                analyzed_data['resume_info'].years, 
+                                analyzed_data['resume_info'].language)
 
     return ResumeInfoResponse(
         resume_id=req.resume_id,
