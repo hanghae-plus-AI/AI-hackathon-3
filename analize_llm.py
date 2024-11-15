@@ -56,43 +56,29 @@ refine_prompt = ChatPromptTemplate.from_messages(
         (
             "system",
             "Data Structure:\n"
-            "\n### Resume Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- user_id: INTEGER\n"
-            "- career: INTEGER\n"
-            "- applicant_name: TEXT\n"
-            "- education_level: INTEGER\n"
-            "\n### Qualification Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT ('TOEIC' or 'TOEFL' only)\n"
-            "- score: INTEGER\n"
-            "\n### Domain Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT\n"
-            "\n### Competence Table\n"
-            "- id: INTEGER PRIMARY KEY\n"
-            "- resume_id: INTEGER (Foreign Key, references Resume(id))\n"
-            "- name: TEXT\n",
-        ),
-        (
-            "system",
-            "답변양식은 다음과 같아야해 반드시 지켜줘\n",
-        ),
-        (
-            "system",
-            "Response Json:\n"
-            "{{ \n"
-            '    "career": int,  // 경력 (숫자 입력, 예: 3)\n'
-            '    "education_level": int,  // 학력 수준 (1: 초졸, 2: 중졸, 3: 고졸, 4: 대졸, 5: 석사, 6: 박사 중 숫자 입력)\n'
-            '    "qualifications": list({{\n'
-            "        \"name\": str,  // 자격증 이름 ('TOEIC 점수' or 'TOEFL 점수' or 'OPIC 점수' or 'TOEIC_SPEAKING 점수' or 'TEPS 점수'only)\n"
-            '        "score": int  // 점수 (OPIC 인 경우 1~6 중 숫자 입력, OPIC: IL(1), IM 1(2), IM 2(3), IM 3(4), IH(5), AL(6))\n'
-            "    }}),\n"
-            '    "domains": list(str),  // 전문 분야 (예: "AI", "Data Science")\n'
-            '    "competences": list(str)  // 주요 역량 (예: "Problem Solving", "Communication")\n'
-            "}}\n",
+            "\n### ResumeInfoResponse(BaseModel)\n"
+            "- resume_id: INTEGER PRIMARY KEY\n"
+            "- applicant_name: INTEGER\n"
+            "- job_category: JobCategory #Enum\n"
+            "- years: YearsOfExperience #Enum\n"
+            "- language: ProgrammingLanguage #Enum\n"
+            "\n### JobCategory(enum.Enum)\n"
+            "- FRONTEND\n"
+            "- BACKEND\n"
+            "- AI\n"
+            "- FULLSTACK\n"
+            "\n### YearsOfExperience(enum.Enum)\n"
+            "- JUNIOR = '0-3'  # 주니어\n"
+            "- MIDLEVEL = '3-7'  # 미들\n"
+            "- SENIOR = '7-1'  # 시니어\n"
+            "\n### ProgrammingLanguage(enum.Enum)\n"
+            "- PYTHON = 'python'\n"
+            "- JAVA = 'java'\n"
+            "- JAVASCRIPT = 'javascript'\n"
+            "- TYPESCRIPT = 'typescript'\n"
+            "- KOTLIN = 'kotlin'\n"
+            "- CPLUSPLUS = '++'\n"
+            "- C = 'c'\n",
         ),
         (
             "human",
