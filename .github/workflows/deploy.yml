@@ -1,0 +1,63 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry config virtualenvs.create false
+
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Run tests
+      run: poetry run pytest
+
+    # - name: Run linting
+    #   run: |
+    #     poetry run black . --check
+    #     poetry run flake8 .
+    #     poetry run mypy .
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # 프로젝트 디렉토리로 이동
+          cd ~/app
+          
+          # 최신 코드 pull
+          git pull origin master
+          
+          # Docker 이미지 빌드
+          docker build -t hanghae-hackathon-python .
+          
+          # 기존 컨테이너 중지 및 삭제
+          docker stop hanghae-hackathon-python-container || true
+          docker rm hanghae-hackathon-python-container || true
+          
+          # 새 컨테이너 실행
+          docker run -d \
+            --name hanghae-hackathon-python-container \
+            -p 8000:8000 \
+            --restart unless-stopped \
+            hanghae-hackathon-python
