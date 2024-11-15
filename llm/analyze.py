@@ -11,15 +11,14 @@ from langchain_community.document_loaders import PyPDFLoader
 from pdf_analyze import PDFLoader
 from schemas.response import ResumeInfoResponse
 from langchain.schema import Document
-
+import enum
 import json
-load_dotenv()
 
+load_dotenv()
 
 
 summarize_prompt = ChatPromptTemplate.from_messages(
     [
-
         (
             "system",
             "이력서 정보를 요약해주는 전문가야\n" "이력서의 요점을 요약해줘 \n",
@@ -27,7 +26,7 @@ summarize_prompt = ChatPromptTemplate.from_messages(
         (
             "human",
             "Resume : \n{question}\n",
-        ), 
+        ),
     ],
 )
 
@@ -39,42 +38,28 @@ summarize_llm = ChatOpenAI(
     ],
 )
 
-refine_prompt = ChatPromptTemplate.from_messages([
-    
-    (
-        "system",
-        "이력서에서 주요 정보를 추출하여 다음 데이터 구조에 맞게 정보를 찾아줘\n",
-    ),
-    (
-        "system",
-        "Data Structure:\n"
-        "\n### ResumeInfo\n"
-        "- resume_id: INTEGER\n"
-        "- applicant_name: TEXT\n"
-        "- job_category: ENUM ('frontend', 'backend', 'ai', 'fullstack')\n"
-        "- years: ENUM ('0-3', '3-7', '7-10')\n"
-        "- language: ENUM ('python', 'java', 'javascript', 'typescript', 'kotlin', 'c++', 'c' 중 하나)\n"
-    ),
-    (
-        "system",
-        "답변은 반드시 다음 JSON 형식을 지켜서 작성해줘\n",
-    ),
-    (
-        "system",
-        "Response Dictionary:\n"
-        "{{\n"
-        '    "resume_id": int,  // 이력서 ID\n'
-        '    "applicant_name": str,  // 지원자 이름\n'
-        '    "job_category": str,  // 직무 분야 ("frontend", "backend", "ai", "fullstack")\n'
-        '    "years": str,  // 경력 연차 ("0-3", "3-7", "7-10")\n'
-        '    "language": str  // 주력 프로그래밍 언어 ("python", "java", "javascript", "typescript", "kotlin", "c++", "c" 중 하나)\n'
-        "}}\n",
-    ),
-    (
-        "human",
-        "Resume:\n{question}\n",
-    ),
-])
+refine_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "이력서에서 주요 정보를 추출하여 다음 데이터 구조에 맞게 정보를 찾아줘\n",
+        ),
+        (
+            "system",
+            "Data Structure:\n"
+            "\n### ResumeInfo\n"
+            "- resume_id: INTEGER\n"
+            "- applicant_name: TEXT\n"
+            "- job_category: ENUM ('frontend', 'backend', 'ai', 'fullstack')\n"
+            "- years: ENUM ('0-3', '3-7', '7-10')\n"
+            "- language: ENUM ('python', 'java', 'javascript', 'typescript', 'kotlin', 'c++', 'c' 중 하나)\n",
+        ),
+        (
+            "human",
+            "Resume:\n{question}\n",
+        ),
+    ]
+)
 
 refine_llm = ChatOpenAI(
     temperature=0.1,
@@ -96,20 +81,29 @@ def pdf_to_documents(documents: list[Document]):
         RunnableParallel(
             question=(summarize_prompt | summarize_llm | (lambda x: x.content))
         )
-        | refine_prompt
-        | refine_llm_with_schema
+        | RunnableParallel(
+            resume_info=refine_prompt | refine_llm_with_schema,
+            summary=lambda x: x["question"],
+        )
     ).invoke(resume)
+    return response
 
     return response
 
 
 if __name__ == "__main__":
-    
+
     file_path = "./pdf_data/backend_추만석.pdf"
 
     pdf_loader = PDFLoader(storage_type="local")
     pdf_data = pdf_loader.load_pdf(file_path)
 
     response = pdf_to_documents(pdf_data)
-    json_response = json.loads(response)
+    json_response = {
+        "resume_id": response["resume_info"].resume_id,
+        "applicant_name": response["resume_info"].applicant_name,
+        "job_category": response["resume_info"].job_category,
+        "years": response["resume_info"].years,
+        "language": response["resume_info"].language,
+    }
     print(json_response)
