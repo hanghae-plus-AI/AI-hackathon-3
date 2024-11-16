@@ -21,3 +21,10 @@ class ResumeInfoResponse(BaseModel):
     job_category: JobCategory
     years: YearsOfExperience
     language: ProgrammingLanguage
+
+
+class ResumeFilter(BaseModel):
+    applicant_name: str | None
+    job_category: JobCategory | None
+    years: YearsOfExperience | None
+    language: ProgrammingLanguage | None
