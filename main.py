@@ -6,6 +6,7 @@ from llm.vector_store import VectorStoreManager
 from llm.interview import generate_question
 from llm.analyze import pdf_to_documents
 from llm.recommend import select_fit_resumes, QueryInfoExtractor
+from llm.chat_resumes import chat_resumes_retrieval
 from preprocess import PDFLoader
 
 from schemas.request import ResumeRecommendRequest, AnalyzeResumeRequest
@@ -40,9 +41,10 @@ async def write_to_vector_db(content, resume_id, applicant_name, job_category, y
                 response_description="",
                 )
 def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]:
-    fit_resumes = select_fit_resumes(req, app.query_info_extractor, app.vector_store)
+    return chat_resumes_retrieval(req)
+    # fit_resumes = select_fit_resumes(req, app.query_info_extractor, app.vector_store)
     
-    return fit_resumes
+    # return fit_resumes
 
 
 @ai_router.post(
