@@ -93,6 +93,7 @@ def analyze(req: AnalyzeResumeRequest,  background_tasks: BackgroundTasks) -> Re
         return response
         
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail="이력서 분석 중 오류가 발생했습니다")
 
 

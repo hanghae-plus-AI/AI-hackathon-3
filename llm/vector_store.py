@@ -4,6 +4,7 @@ from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 import os
 from typing import List, Dict
+from uuid import UUID
 from schemas.enums import JobCategory, YearsOfExperience, ProgrammingLanguage
 
 
@@ -34,7 +35,7 @@ class VectorStoreManager:
     def create_resume_document(
         self,
         content: str,
-        resume_id: int,
+        resume_id: UUID,
         applicant_name: str,
         job_category: JobCategory,
         years: YearsOfExperience,
@@ -59,7 +60,7 @@ class VectorStoreManager:
     def add_resume(
         self,
         content: str,
-        resume_id: int,
+        resume_id: UUID,
         applicant_name: str,
         job_category: JobCategory,
         years: YearsOfExperience,
@@ -133,7 +134,7 @@ if __name__ == "__main__":
         - AWS 클라우드 환경에서의 개발 경험
         - FastAPI, Django 프레임워크 사용 경험
         """,
-        resume_id=1,
+        resume_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
         applicant_name="홍길동",
         job_category=JobCategory.BACKEND,
         years=YearsOfExperience.JUNIOR,
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     resumes = [
         {
             "content": "프론트엔드 개발자 이력서...",
-            "resume_id": 2,
+            "resume_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
             "applicant_name": "김철수",
             "job_category": "frontend",
             "years": "3-7",
@@ -152,7 +153,7 @@ if __name__ == "__main__":
         },
         {
             "content": "AI 엔지니어 이력서...",
-            "resume_id": 3,
+            "resume_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
             "applicant_name": "이영희",
             "job_category": "ai",
             "years": "0-3",
