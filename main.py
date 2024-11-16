@@ -53,7 +53,7 @@ def resumes_chat(req: ResumeRecommendRequest) -> list[RecommendedResumeResponse]
     description="이력서를 기반으로 질문 생성",
     response_description="질문은 직군별 질문, 컬쳐핏 질문, 경험 질문, 프로젝트 질문으로 나눌 수 있음.",
 )
-def interview(resume_id: UUID) -> list[InterviewQuestionResponse]:
+def interview(resume_id: str) -> list[InterviewQuestionResponse]:
     # resume_id에 해당하는 정보 chroma db에서 가져오기
     resume_info = app.vector_store.get_resume_info(resume_id) 
     questions = generate_question(''.join(resume_info['documents']))

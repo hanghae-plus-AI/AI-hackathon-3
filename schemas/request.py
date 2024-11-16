@@ -5,5 +5,5 @@ class ResumeRecommendRequest(BaseModel):
 
 class AnalyzeResumeRequest(BaseModel):
     user_id: str
-    resume_id: UUID
+    resume_id: str
     file_path: str
