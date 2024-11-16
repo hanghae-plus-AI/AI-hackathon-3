@@ -1,3 +1,7 @@
+
+# HIRO
+> Backend Repository:  [https://github.com/hanghae-plus-AI/AI-hackathon-3-BE](https://github.com/hanghae-plus-AI/AI-hackathon-3-BE)
+> Frontend Repository: [https://github.com/hanghae-plus-AI/AI-hackathon-3-FE](https://github.com/hanghae-plus-AI/AI-hackathon-3-FE)
 ## 💡 서비스 개요
 Hiro, we are hiring! 하이로는 채용담당관의 요구사항을 기반으로 적합한 이력서를 추천해주는 서비스입니다.
 많은 이력서들 중에 채용 담당관이 원하는 이력서를 더 쉽고 빠르게 찾을 수 있도록 돕고자 만들었습니다. 
