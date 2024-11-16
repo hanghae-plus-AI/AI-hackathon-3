@@ -103,9 +103,11 @@ class VectorStoreManager:
     ) -> List[Document]:
         if filter_metadata:
             # 여러 조건을 $and로 결합
-            where_clause = {
-                "$and": [{key: value} for key, value in filter_metadata.items()]
-            }
+            where_clause = (
+                {"$and": [{key: value} for key, value in filter_metadata.items()]}
+                if len(filter_metadata.items()) > 1
+                else filter_metadata
+            )
         else:
             where_clause = None
 
