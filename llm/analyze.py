@@ -4,7 +4,7 @@ from langchain.schema.runnable import RunnableParallel
 from dotenv import load_dotenv
 from llm.log_callback_handler import LogCallbackHandler
 from langchain.prompts import ChatPromptTemplate
-from pdf_analyze import PDFLoader
+from preprocess import PDFLoader
 from schemas.response import ResumeInfoResponse
 from langchain.schema import Document
 
