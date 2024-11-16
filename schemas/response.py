@@ -16,7 +16,7 @@ class InterviewQuestionResponse(BaseModel):
 
 
 class ResumeInfoResponse(BaseModel):
-    resume_id: int
+    resume_id: UUID
     applicant_name: str
     job_category: JobCategory
     years: YearsOfExperience
