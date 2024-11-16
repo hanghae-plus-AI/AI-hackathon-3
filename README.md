@@ -18,7 +18,7 @@ Hiro, we are hiring! 하이로는 채용담당관의 요구사항을 기반으�
 
 ## 시연 영상
 
-# API Specification
+## API Specification
 - [AI 명세](./docs/ai.md)
 - [Backend 명세](./docs/backend.md)
 - [Frontend 명세](./docs/frontend.md)
@@ -56,6 +56,7 @@ Hiro, we are hiring! 하이로는 채용담당관의 요구사항을 기반으�
 ## 💻 Deployment
 docker 컨테이너 형식으로 AWS EC2에 배포하였고, github action으로 CI/CD 파이프라인을 구현하였습니다.
 
+![deployment](docs/img/full-app-architecture.png)
 
 ## Author
 
