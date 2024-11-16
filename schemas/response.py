@@ -1,9 +1,9 @@
 from pydantic import BaseModel
+from uuid import UUID
 from .enums import QuestionType, JobCategory, YearsOfExperience, ProgrammingLanguage
 
-
 class RecommendedResumeResponse(BaseModel):
-    resume_id: int
+    resume_id: UUID
     applicant_name: str
     job_category: JobCategory
     years: YearsOfExperience
