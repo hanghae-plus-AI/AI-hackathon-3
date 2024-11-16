@@ -1,56 +1,73 @@
-💡 서비스 개요
+## 💡 서비스 개요
 Hiro, we are hiring! 하이로는 채용담당관의 요구사항을 기반으로 적합한 이력서를 추천해주는 서비스입니다.
 많은 이력서들 중에 채용 담당관이 원하는 이력서를 더 쉽고 빠르게 찾을 수 있도록 돕고자 만들었습니다. 
 
-💡 개요
-잘못된 정보와 가짜 뉴스는 사회적 혼란, 정치적 불안정, 경제적 손실, 공공 건강 위협, 교육 저하, 법적 문제를 유발합니다. 이 서비스는 이러한 사회적 문제를 해결하기 위해 정확한 정보를 제공하여 여러분이 올바른 결정을 내릴 수 있도록 돕기 위해 개발되었습니다.
 
-🕹️ 배경
-수많은 이력서 속에서 채용담당관이 원하는 인재를 찾는 일은 쉽지 않습니다.
+## 🕹️ 배경
+수많은 이력서들 중 채용담당관이 원하는 인재를 찾는 일은 쉽지 않습니다.
+한 사람이 정성들여 확인할 수 있는 정보에는 한계가 있기 마련입니다.
+이러한 한계를 극복하고자 하이로는 PDF형식의 이력서들을 업로드 시에 텍스트 형식으로 변환하여 저장하고, LLM을 사용하여 이력서들을 분석합니다.
+분석한 정보를 기반으로 채용담당관이 물을만한 면접 질문들을 생성해주는 기능과 채용담당관의 요구사항에 맞는 이력서들을 추천해주는 기능을 가지고 있습니다.
 
-💻 애플리케이션 소개
-목적: 사용자가 입력한 정보를 바탕으로 사실 여부를 확인하고 검증합니다.
+## 💻 애플리케이션 소개
+목적: 이력서에서 필요한 정보들을 저장 및 추출합니다.
 주요 기능:
-사실 확인: 입력된 텍스트의 사실 여부를 분석합니다.
-출처 제공: 검증된 정보의 출처를 제공합니다.
-역사적 사실 검증: 역사적 사건이나 인물에 대한 정보를 확인합니다.
-실시간 업데이트: 최신 정보를 반영하여 사실 여부를 확인합니다.
+- 이력서 업로드 시 LLM 기반 정형화 데이터 추출(이름, 경력, 언어, 기술스택 등)
+- 이력서 기반 채용 담당관이 물을만한 질문(직군별, 컬쳐핏, 경험, 프로젝트 질문) 생성
+- 채용 담당관의 요구사항(프롬프트)에 맞는 이력서들을 추천
 
-💡 Getting Started
-```
-sh build.sh
-```
+## 시연 영상
 
-💡 API 명세
-```
-# FastAPI 앱 구동 후 동작
-http://localhost:8000/docs
-```
-
-스크린샷
+# API Specification
+- [AI 명세](./docs/ai.md)
+- [Backend 명세](./docs/backend.md)
+- [Frontend 명세](./docs/frontend.md)
 
 
+## 💎 개발자
+### AI
+|                                                 신은성                                                  |                                                  임요한                                                  |
+| :-----------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/watanka.png" alt="profile" width="180" height="180"> | <img src="https://github.com/obov.png" alt="profile" width="180" height="180"> |
+|                               [watanka](https://github.com/watanka)                               |                                  [obov](https://github.com/obov)                                  |
 
-스크린샷
-
-🛠 기술 스택
-FastAPI, LangChain, Chroma, OpenAI
-💎 개발자
-신은성	임요한
-profile	profile
-watanka	obov
-
-
-Author
-See our CODEOWNERS file.
+<br/>
 
 
-💻 Release
+### Backend
+
+|                                                 김영원                                                  |                                                  한상현                                                  |
+| :-----------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/yw7148.png" alt="profile" width="180" height="180"> | <img src="https://github.com/Hansanghyun-github.png" alt="profile" width="180" height="180"> |
+|                               [yw7148](https://github.com/yw7148)                               |                                  [Hansanghyun-github](https://github.com/Hansanghyun-github)                                  |
+
+<br/>
+
+
+### Frontend
+
+|                                                 장세영                                                  |                                                  옥채현                                                  |
+| :-----------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/jangseyeong.png" alt="profile" width="180" height="180"> | <img src="https://github.com/okch0310.png" alt="profile" width="180" height="180"> |
+|                               [jangseyeong](https://github.com/jangseyeong)                               |                                  [okch0310](https://github.com/okch0310)                                  |
+
+<br/>
+
+## 💻 Deployment
 docker 컨테이너 형식으로 AWS EC2에 배포하였고, github action으로 CI/CD 파이프라인을 구현하였습니다.
 
-https://fact-checker-fe.vercel.app/
-[발표자료](./pdf/FactChecker팀 최종 발표 c87df5402c4d4e77819f95b63e7227aa.pdf)
 
-📝 License
+## Author
+
+See our [CODEOWNERS](./.github/CODEOWNERS) file.
+
+
+
+
+
+## 발표 자료
+
+
+## 📝 License
 This project is MIT licensed.
 
